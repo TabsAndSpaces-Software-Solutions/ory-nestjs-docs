@@ -18,4 +18,4 @@ The core philosophy of this library is the **Zero-Ory-leakage contract**. This m
 
 - Follow the [Quick Start](./usage/quick-start) to integrate `ory-nestjs` into your project in 5 minutes.
 - Check the [Installation](./usage/installation) guide for package details.
-- Explore [Architecture](../development/architecture) to understand how it works under the hood.
+- Explore [Architecture](./development/architecture) to understand how it works under the hood.
