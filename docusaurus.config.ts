@@ -15,14 +15,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://ukki.dev',
+  url: 'https://ory-nestjs-docs.vercel.app/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'ukki', // Usually your GitHub org/user name.
+  organizationName: 'Tabs And Spaces Software Solutions', // Usually your GitHub org/user name.
   projectName: 'ory-nestjs', // Usually your repo name.
 
   onBrokenLinks: 'throw',
@@ -143,7 +143,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Ukki. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Tabs And Spaces Software Solutions. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

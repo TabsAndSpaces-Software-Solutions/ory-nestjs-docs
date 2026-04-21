@@ -16,7 +16,7 @@ Roles are set by administrators and travel on the identity's `metadataPublic`. T
 
 ```ts
 // Identity.metadataPublic (server-set, surfaced to services but NOT self-editable)
-type UkkiMetadataPublic = {
+type MetadataPublic = {
   actorType: 'customer' | 'platform_admin' | 'vendor';
   roles: string[];              // see below
   vendor?: {

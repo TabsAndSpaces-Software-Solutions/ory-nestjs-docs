@@ -28,4 +28,4 @@ export class AuthController {
 }
 ```
 
-Returned flow DTOs (`UkkiLoginFlow`, etc.) contain library-owned `UkkiFlowUi` nodes + an opaque `csrfToken`. Never pass Ory's UI shapes directly to your frontend; always go through these DTOs.
+Returned flow DTOs (`LoginFlow`, etc.) contain library-owned `FlowUi` nodes + an opaque `csrfToken`. Never pass Ory's UI shapes directly to your frontend; always go through these DTOs.
