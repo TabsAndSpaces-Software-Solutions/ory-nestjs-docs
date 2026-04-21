@@ -103,9 +103,34 @@ type TenantConfig = {
     clientSecret?: string;
   };
   oathkeeper?: {
-    identityHeader?: string;      // default 'X-User'
-    signatureHeader?: string;     // default 'X-User-Signature'
-    signerKeys: string[];         // non-empty; allowlist supports rotation
+    identityHeader?: string;                  // default 'X-User'
+    signatureHeader?: string;                 // default 'X-User-Signature'
+
+    // Verifier discriminator — 'hmac' for shared-secret envelopes (default,
+    // backwards-compatible) or 'jwt' for asymmetric JWTs minted by the
+    // Oathkeeper `id_token` mutator. See Scenario D.
+    verifier?: 'hmac' | 'jwt';                // default 'hmac'
+
+    // HMAC mode — symmetric keys shared with Oathkeeper's `header` mutator.
+    // First match wins; non-primary matches emit a one-time WARN (rotation).
+    signerKeys?: string[];                    // required when verifier === 'hmac'
+
+    // JWT mode — one of url or keys is required when verifier === 'jwt'.
+    jwks?: {
+      url?: string;                           // remote JWKS; periodically refreshed
+      keys?: Record<string, unknown>[];       // inline JWK array (dev/tests)
+      algorithms?: string[];                  // default ['RS256', 'ES256']; HS*/none rejected
+      refreshIntervalMs?: number;             // default 600_000
+      cooldownMs?: number;                    // default 30_000 (refresh-on-miss gate)
+    };
+
+    // Shared across verifier modes.
+    audience?: string | string[];             // if set, envelope/JWT must declare it
+    clockSkewMs?: number;                     // default 30_000; leeway on expiry check
+    replayProtection?: {
+      enabled?: boolean;                      // requires a jti claim + ReplayCache
+      ttlMs?: number;                         // default 600_000
+    };
   };
   logging?: { level: 'error' | 'warn' | 'info' | 'debug' };
   cache?: { sessionTtlMs: number; permissionTtlMs: number; jwksTtlMs: number };
@@ -166,4 +191,26 @@ The library builds the Ory Cloud API URL (`https://<projectSlug>.projects.oryapi
 
 :::note Since 0.2.1
 In 0.2.0 the `kratos` block was required for every tenant regardless of mode, which broke `mode: 'cloud'` at both the TypeScript (`Property 'kratos' is missing in type`) and runtime (*"kratos is required"*) layers. 0.2.1 made `kratos` optional for cloud tenants and derives URLs + admin credentials from `cloud.projectSlug` + `cloud.apiKey`. Self-hosted still requires `kratos.publicUrl`.
+:::
+
+:::note Since 0.4.0 — `TenantConfig` vs `ValidatedTenantConfig`
+Before 0.4.0, the exported `TenantConfig` type was the post-validation output shape, which forced every consumer factory to redundantly supply defaulted fields:
+
+```ts
+// 0.3.x — TS2741: Property 'sessionCookieName' is missing in type …
+function buildTenant(): TenantConfig {
+  return {
+    mode: 'self-hosted',
+    transport: 'cookie-or-bearer',
+    kratos: { publicUrl: process.env.KRATOS_URL! }, // ← sessionCookieName error
+  };
+}
+```
+
+In 0.4.0 the types are split:
+
+- `TenantConfig` — **input** shape (what you write at the call site; defaulted fields are optional). Use this on factory/helper return types.
+- `ValidatedTenantConfig` — **output** shape, with every default applied. This is what `ConfigLoader.load()` returns and what the library reads internally. Consumers rarely need it; reach for it only when you're writing code that relies on defaults being present.
+
+If you kept a `TenantConfig`-typed variable to read a defaulted field, switch it to `ValidatedTenantConfig`.
 :::

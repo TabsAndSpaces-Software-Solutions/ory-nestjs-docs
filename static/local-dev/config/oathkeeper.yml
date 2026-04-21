@@ -8,7 +8,10 @@ serve:
     cors:
       enabled: true
       allowed_origins: ["*"]
-      allowed_methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      # OPTIONS is NOT listed — Oathkeeper v26 rejects the config if it
+       # is. The browser preflight for OPTIONS is handled automatically
+       # before any method allowlist is consulted.
+      allowed_methods: [GET, HEAD, POST, PUT, PATCH, DELETE]
       allowed_headers: [Authorization, Content-Type, Cookie]
       exposed_headers: [Content-Type]
       allow_credentials: true

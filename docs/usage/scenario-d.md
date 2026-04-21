@@ -6,7 +6,16 @@ sidebar_position: 15
 
 End-to-end walkthrough: from `nest new` to a running three-service system where every downstream request is cryptographically verified via a signed JWT from Oathkeeper. No shared secrets. No network calls back to Kratos on the hot path. Signing-key rotation, audience scoping, envelope expiry, and anti-replay — all from config.
 
-Everything here ships in `ory-nestjs@0.3.0+`. If you're on 0.2.x, the HMAC-based Oathkeeper mode is still there and behaves the same; the `verifier: 'jwt'` upgrade path is additive.
+Everything here ships in `ory-nestjs@0.4.0+`. If you're on 0.2.x, the HMAC-based Oathkeeper mode is still there and behaves the same; the `verifier: 'jwt'` upgrade path is additive.
+
+:::note 0.4.0 fixes relevant to this scenario
+- `Authorization: Bearer <jwt>` is now accepted unchanged — the transport strips the `Bearer ` prefix for `verifier: 'jwt'`. Before 0.4.0 every request 401'd with `auth.failure.invalid_signature`.
+- `@RequirePermission(...)` routes correctly read `.data.allowed` off Keto's Axios response (instead of the incorrect `.allowed` on the raw response). Pre-0.4.0 every permission check 403'd even when Keto answered `allowed: true`.
+- `TenantConfig` is now the input shape (fields with defaults are optional). Consumers who factor tenants into a shared helper no longer have to declare `sessionCookieName` and friends explicitly. For the post-validation shape use the new `ValidatedTenantConfig` export.
+- Ory image tags: `oryd/kratos:v1.3.1` → `oryd/kratos:v26.2.0` (same for keto/hydra/oathkeeper). Docker Hub no longer hosts the old tags.
+- Oathkeeper v26 rejects `OPTIONS` in `serve.proxy.cors.allowed_methods`; the provided `config/oathkeeper.yml` lists `GET, HEAD, POST, PUT, PATCH, DELETE`.
+- Oathkeeper v26 does not auto-populate `jti`; the `id_token` claims template below explicitly declares `"jti": "{{ uuidv4 }}"` so the replay cache works.
+:::
 
 ## What we're building
 
@@ -50,7 +59,7 @@ Oathkeeper needs an RSA/EC keypair to sign id_tokens. Generate it once; Oathkeep
 
 ```bash
 # In the directory that holds your docker-compose.yml + config/
-docker run --rm -v "$PWD/config:/config" oryd/oathkeeper:v0.40.7 \
+docker run --rm -v "$PWD/config:/config" oryd/oathkeeper:v26.2.0 \
   credentials generate --alg RS256 > config/oathkeeper-jwks.json
 ```
 
@@ -81,13 +90,14 @@ mutators:
           "tenant": "default",
           "aud": ["orders-api", "inventory-api"],
           "sub": "{{ print .Subject }}",
+          "jti": "{{ uuidv4 }}",
           "metadataPublic": {{ print .Extra.metadata_public | toJson }}
         }
 ```
 
 - `aud` — the services allowed to accept this token. Each NestJS service below will assert its own entry in this list.
 - `ttl: 60s` — envelope expiry. `ory-nestjs`'s `clockSkewMs` (default 30 s) handles modest clock drift.
-- `jti` — **not listed here because Oathkeeper auto-generates a fresh UUIDv4 per request**. That's the claim our replay cache keys on.
+- `jti: "{{ uuidv4 }}"` — **required for the replay cache to work**. Oathkeeper v26 does NOT auto-populate `jti`; consumers who copy the template without this line will see every request after the first 401 with `auth.failure.replay`. The `uuidv4` template function is built into Oathkeeper's claims evaluator.
 
 Then update `config/access-rules.json` to wire three routes — one public, two zero-trust:
 
@@ -589,7 +599,7 @@ No Kratos round-trip on the hot path. No shared secret between Oathkeeper and yo
 1. Add a second key to `config/oathkeeper-jwks.json`:
 
    ```bash
-   docker run --rm oryd/oathkeeper:v0.40.7 credentials generate --alg RS256 \
+   docker run --rm oryd/oathkeeper:v26.2.0 credentials generate --alg RS256 \
      | jq '.keys[0]' > /tmp/new-key.json
    # Merge into the existing JWKS keys[] array, keeping the old key for now.
    jq '.keys += [input]' config/oathkeeper-jwks.json /tmp/new-key.json \

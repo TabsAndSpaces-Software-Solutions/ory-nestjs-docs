@@ -34,7 +34,7 @@ For data-scoped checks (can user X edit listing Y?), use `@RequirePermission`:
 updateListing(@Param('id') id: string) { /* … */ }
 ```
 
-Under the hood the guard calls Keto's `checkPermission` with `subject = 'user:' + user.id`. Keto returns `{ allowed: boolean }`; `false` → 403.
+Under the hood the guard calls Keto's `checkPermission` with `subject = 'user:' + user.id`. Keto answers with a `CheckPermissionResult` wrapped in an Axios response (`response.data.allowed`); `false` → 403. The library unwraps that for you — your handler never sees the Axios envelope.
 
 ### When to use which
 

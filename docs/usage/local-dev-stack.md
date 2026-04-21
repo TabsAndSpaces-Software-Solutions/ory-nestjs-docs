@@ -54,7 +54,7 @@ Or copy each file from the blocks below.
 
 ### `docker-compose.yml`
 
-Uses pinned tags (`kratos:v1.3.1`, `keto:v0.13.0`, `hydra:v2.2.0`, `oathkeeper:v0.40.7`). Bump as you like.
+Uses pinned tags (`kratos:v26.2.0`, `keto:v26.2.0`, `hydra:v26.2.0`, `oathkeeper:v26.2.0`). Bump as you like.
 
 ```yaml title="docker-compose.yml"
 services:
@@ -74,7 +74,7 @@ services:
       retries: 30
 
   kratos-migrate:
-    image: oryd/kratos:v1.3.1
+    image: oryd/kratos:v26.2.0
     environment:
       DSN: postgres://kratos:secret@kratos-postgres:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
     volumes:
@@ -86,7 +86,7 @@ services:
         condition: service_healthy
 
   kratos:
-    image: oryd/kratos:v1.3.1
+    image: oryd/kratos:v26.2.0
     ports:
       - "4433:4433"
       - "4434:4434"
@@ -124,7 +124,7 @@ services:
       retries: 30
 
   keto-migrate:
-    image: oryd/keto:v0.13.0
+    image: oryd/keto:v26.2.0
     environment:
       DSN: postgres://keto:secret@keto-postgres:5432/keto?sslmode=disable&max_conns=20&max_idle_conns=4
     volumes:
@@ -136,7 +136,7 @@ services:
         condition: service_healthy
 
   keto:
-    image: oryd/keto:v0.13.0
+    image: oryd/keto:v26.2.0
     ports:
       - "4466:4466"
       - "4467:4467"
@@ -167,7 +167,7 @@ services:
       retries: 30
 
   hydra-migrate:
-    image: oryd/hydra:v2.2.0
+    image: oryd/hydra:v26.2.0
     environment:
       DSN: postgres://hydra:secret@hydra-postgres:5432/hydra?sslmode=disable&max_conns=20&max_idle_conns=4
     volumes:
@@ -179,7 +179,7 @@ services:
         condition: service_healthy
 
   hydra:
-    image: oryd/hydra:v2.2.0
+    image: oryd/hydra:v26.2.0
     ports:
       - "4444:4444"
       - "4445:4445"
@@ -197,7 +197,7 @@ services:
 
   # ───────────────────────────── Oathkeeper ─────────────────────────────
   oathkeeper:
-    image: oryd/oathkeeper:v0.40.7
+    image: oryd/oathkeeper:v26.2.0
     ports:
       - "4455:4455"
       - "4456:4456"
@@ -222,7 +222,7 @@ Kratos public URLs, self-service flows, email+password identity. Same as the min
 ### `config/keto.yml`
 
 ```yaml title="config/keto.yml"
-version: v0.13.0
+version: v26.2.0
 
 log:
   level: info
@@ -297,7 +297,10 @@ serve:
     cors:
       enabled: true
       allowed_origins: ["*"]
-      allowed_methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      # OPTIONS is NOT listed — Oathkeeper v26 rejects the config if it
+       # is. Preflight for OPTIONS is handled automatically before the
+       # method allowlist is consulted.
+      allowed_methods: [GET, HEAD, POST, PUT, PATCH, DELETE]
       allowed_headers: [Authorization, Content-Type, Cookie]
       exposed_headers: [Content-Type]
       allow_credentials: true
@@ -449,19 +452,38 @@ IamModule.forRoot({
 
 Switch the transport to `'oathkeeper'` and put your NestJS app behind `http://127.0.0.1:4455`:
 
+Two modes — pick one:
+
 ```ts
+// HMAC mode (shared secret — simpler, symmetric).
 default: {
   mode: 'self-hosted',
   transport: 'oathkeeper',
   kratos: { publicUrl: 'http://127.0.0.1:4433' },
   oathkeeper: {
+    verifier: 'hmac',
     signerKeys: ['<base64-of-your-oathkeeper-signing-key>'],
     // identityHeader + signatureHeader default to X-User / X-User-Signature.
   },
 },
+
+// JWT mode (asymmetric, recommended — no shared secret).
+default: {
+  mode: 'self-hosted',
+  transport: 'oathkeeper',
+  kratos: { publicUrl: 'http://127.0.0.1:4433' },
+  oathkeeper: {
+    verifier: 'jwt',
+    identityHeader: 'Authorization',        // id_token mutator writes here; Bearer prefix is stripped
+    jwks: { url: 'http://127.0.0.1:4456/.well-known/jwks.json' },
+    audience: 'my-api',
+    clockSkewMs: 30_000,
+    replayProtection: { enabled: true, ttlMs: 300_000 },
+  },
+},
 ```
 
-The sample `access-rules.json` uses the `header` mutator (unsigned `X-User`). For production-grade integration with `transport: 'oathkeeper'` you'll want the `id_token` mutator — it signs a JWT you can verify against `oathkeeper.signerKeys`. See the [Oathkeeper mutators reference](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) for the JWKS / signer setup.
+The sample `access-rules.json` above uses the `header` mutator (unsigned `X-User`) for HMAC mode. For asymmetric JWT mode, switch the rule's mutator to `id_token` and follow [Scenario D](./scenario-d) for the full walkthrough — it covers key generation, JWKS publication, and consumer-side verification end-to-end.
 
 ## Common tasks
 
