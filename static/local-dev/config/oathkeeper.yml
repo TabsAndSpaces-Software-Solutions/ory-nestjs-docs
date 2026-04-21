@@ -1,0 +1,81 @@
+log:
+  level: info
+  format: json
+
+serve:
+  proxy:
+    port: 4455
+    cors:
+      enabled: true
+      allowed_origins: ["*"]
+      allowed_methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      allowed_headers: [Authorization, Content-Type, Cookie]
+      exposed_headers: [Content-Type]
+      allow_credentials: true
+  api:
+    port: 4456
+
+access_rules:
+  repositories:
+    - file:///etc/config/access-rules.json
+  matching_strategy: glob
+
+# Authenticators — how Oathkeeper learns who the caller is.
+authenticators:
+  anonymous:
+    enabled: true
+    config:
+      subject: anonymous
+  bearer_token:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      preserve_query: true
+      subject_from: "identity.id"
+      extra_from: "identity"
+  cookie_session:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      preserve_query: true
+      subject_from: "identity.id"
+      extra_from: "identity"
+      only:
+        - ory_kratos_session
+  noop:
+    enabled: true
+
+# Authorizers — should the request go through?
+authorizers:
+  allow:
+    enabled: true
+  deny:
+    enabled: true
+
+# Mutators — how Oathkeeper talks to the upstream about the caller.
+# `header` is the simplest shape; for `transport: 'oathkeeper'` in
+# ory-nestjs you will want `id_token` or a signed custom header instead.
+mutators:
+  noop:
+    enabled: true
+  header:
+    enabled: true
+    config:
+      headers:
+        X-User: "{{ print .Subject }}"
+        X-User-Extras: '{{ print .Extra | toJson }}'
+
+errors:
+  fallback:
+    - json
+  handlers:
+    json:
+      enabled: true
+      config:
+        verbose: true
+    redirect:
+      enabled: true
+      config:
+        to: http://127.0.0.1:3000/login

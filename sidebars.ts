@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'usage/quick-start',
         'usage/installation',
+        'usage/local-dev-stack',
       ],
     },
     {

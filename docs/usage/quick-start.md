@@ -90,6 +90,10 @@ export class AppModule {}
 
 Self-hosted mode requires at least `kratos.publicUrl`. `adminUrl` + `adminToken` are required only for admin operations (identity CRUD, session revoke).
 
+:::tip No Ory running yet?
+See [Local development stack](./local-dev-stack) for a copy-paste `docker-compose.yml` that brings up Kratos + Postgres + MailSlurper on your machine in one command.
+:::
+
 ## 2. Secure your Controllers
 
 Identical for both modes:

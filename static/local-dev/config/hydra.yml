@@ -1,0 +1,36 @@
+serve:
+  cookies:
+    same_site_mode: Lax
+
+urls:
+  # Public issuer that tokens will reference. Matches the host port
+  # mapping in docker-compose.yml.
+  self:
+    issuer: http://127.0.0.1:4444
+  # These point at your NestJS app's /login, /consent, /logout routes.
+  # Replace :3000 with whatever port your app runs on.
+  consent: http://127.0.0.1:3000/consent
+  login:   http://127.0.0.1:3000/login
+  logout:  http://127.0.0.1:3000/logout
+
+# DEV SECRETS — rotate before anything resembling production.
+# Must be ≥ 32 chars.
+secrets:
+  system:
+    - change-me-insecure-dev-secret-0000000000000000
+
+oidc:
+  subject_identifiers:
+    supported_types:
+      - pairwise
+      - public
+    pairwise:
+      salt: some-salt-change-me-for-production
+
+oauth2:
+  expose_internal_errors: true
+
+log:
+  level: info
+  format: json
+  leak_sensitive_values: false

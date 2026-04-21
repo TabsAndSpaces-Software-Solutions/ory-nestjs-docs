@@ -1,0 +1,23 @@
+[
+  {
+    "id": "app:passthrough",
+    "description": "Default catch-all rule. Authenticates via cookie or bearer, falls through anonymous, forwards to the NestJS app.",
+    "upstream": {
+      "url": "http://host.docker.internal:3000",
+      "preserve_host": true
+    },
+    "match": {
+      "url": "http://127.0.0.1:4455/<**>",
+      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    },
+    "authenticators": [
+      { "handler": "cookie_session" },
+      { "handler": "bearer_token" },
+      { "handler": "anonymous" }
+    ],
+    "authorizer": { "handler": "allow" },
+    "mutators": [
+      { "handler": "header" }
+    ]
+  }
+]

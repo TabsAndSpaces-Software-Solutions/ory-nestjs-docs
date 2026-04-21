@@ -1,0 +1,180 @@
+# Complete local Ory stack for ory-nestjs consumers.
+#
+# Spins up:
+#   - Kratos       (identities + sessions; public 4433 / admin 4434)
+#   - Keto         (permissions; read 4466 / write 4467)
+#   - Hydra        (OAuth2 / OIDC; public 4444 / admin 4445)
+#   - Oathkeeper   (identity-aware proxy; proxy 4455 / api 4456)
+#   - MailSlurper  (captures emails for verification/recovery; UI 4436)
+#   - Postgres     (one per Ory service, for isolation)
+#
+# Usage:
+#   mkdir -p config
+#   curl -o docker-compose.yml                  https://orynestjs.tabsandspaces.co/local-dev/docker-compose.yml
+#   curl -o config/kratos.yml                   https://orynestjs.tabsandspaces.co/local-dev/config/kratos.yml
+#   curl -o config/identity.schema.json         https://orynestjs.tabsandspaces.co/local-dev/config/identity.schema.json
+#   curl -o config/keto.yml                     https://orynestjs.tabsandspaces.co/local-dev/config/keto.yml
+#   curl -o config/hydra.yml                    https://orynestjs.tabsandspaces.co/local-dev/config/hydra.yml
+#   curl -o config/oathkeeper.yml               https://orynestjs.tabsandspaces.co/local-dev/config/oathkeeper.yml
+#   curl -o config/access-rules.json            https://orynestjs.tabsandspaces.co/local-dev/config/access-rules.json
+#   docker compose up
+#
+# All services run on the host loopback; no port conflicts with each other.
+
+services:
+  # ─────────────────────────────── Kratos ───────────────────────────────
+  kratos-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kratos
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: kratos
+    volumes:
+      - kratos-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kratos -d kratos"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  kratos-migrate:
+    image: oryd/kratos:v1.3.1
+    environment:
+      DSN: postgres://kratos:secret@kratos-postgres:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    volumes:
+      - ./config:/etc/config:ro
+    command: -c /etc/config/kratos.yml migrate sql -e --yes
+    restart: on-failure
+    depends_on:
+      kratos-postgres:
+        condition: service_healthy
+
+  kratos:
+    image: oryd/kratos:v1.3.1
+    ports:
+      - "4433:4433"   # Public API
+      - "4434:4434"   # Admin API
+    environment:
+      DSN: postgres://kratos:secret@kratos-postgres:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+      LOG_LEVEL: info
+    volumes:
+      - ./config:/etc/config:ro
+    command: serve -c /etc/config/kratos.yml --dev --watch-courier
+    restart: unless-stopped
+    depends_on:
+      kratos-migrate:
+        condition: service_completed_successfully
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    ports:
+      - "4436:4436"   # Web UI  → http://127.0.0.1:4436
+      - "4437:4437"   # Read API
+    restart: unless-stopped
+
+  # ──────────────────────────────── Keto ────────────────────────────────
+  keto-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: keto
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: keto
+    volumes:
+      - keto-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keto -d keto"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  keto-migrate:
+    image: oryd/keto:v0.13.0
+    environment:
+      DSN: postgres://keto:secret@keto-postgres:5432/keto?sslmode=disable&max_conns=20&max_idle_conns=4
+      LOG_LEVEL: info
+    volumes:
+      - ./config:/etc/config:ro
+    command: migrate up -y -c /etc/config/keto.yml
+    restart: on-failure
+    depends_on:
+      keto-postgres:
+        condition: service_healthy
+
+  keto:
+    image: oryd/keto:v0.13.0
+    ports:
+      - "4466:4466"   # Read API
+      - "4467:4467"   # Write API
+    environment:
+      DSN: postgres://keto:secret@keto-postgres:5432/keto?sslmode=disable&max_conns=20&max_idle_conns=4
+      LOG_LEVEL: info
+    volumes:
+      - ./config:/etc/config:ro
+    command: serve -c /etc/config/keto.yml
+    restart: unless-stopped
+    depends_on:
+      keto-migrate:
+        condition: service_completed_successfully
+
+  # ─────────────────────────────── Hydra ────────────────────────────────
+  hydra-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hydra
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: hydra
+    volumes:
+      - hydra-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hydra -d hydra"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  hydra-migrate:
+    image: oryd/hydra:v2.2.0
+    environment:
+      DSN: postgres://hydra:secret@hydra-postgres:5432/hydra?sslmode=disable&max_conns=20&max_idle_conns=4
+    volumes:
+      - ./config:/etc/config:ro
+    command: migrate sql -e --yes -c /etc/config/hydra.yml
+    restart: on-failure
+    depends_on:
+      hydra-postgres:
+        condition: service_healthy
+
+  hydra:
+    image: oryd/hydra:v2.2.0
+    ports:
+      - "4444:4444"   # Public API / OIDC discovery
+      - "4445:4445"   # Admin API
+    environment:
+      DSN: postgres://hydra:secret@hydra-postgres:5432/hydra?sslmode=disable&max_conns=20&max_idle_conns=4
+      SECRETS_SYSTEM: change-me-insecure-dev-secret-0000000000000000
+      LOG_LEVEL: info
+    volumes:
+      - ./config:/etc/config:ro
+    command: serve all --dev -c /etc/config/hydra.yml
+    restart: unless-stopped
+    depends_on:
+      hydra-migrate:
+        condition: service_completed_successfully
+
+  # ───────────────────────────── Oathkeeper ─────────────────────────────
+  oathkeeper:
+    image: oryd/oathkeeper:v0.40.7
+    ports:
+      - "4455:4455"   # Reverse proxy
+      - "4456:4456"   # Management API
+    volumes:
+      - ./config:/etc/config:ro
+    command: serve -c /etc/config/oathkeeper.yml
+    restart: unless-stopped
+    depends_on:
+      kratos:
+        condition: service_started
+
+volumes:
+  kratos-data:
+  keto-data:
+  hydra-data:
