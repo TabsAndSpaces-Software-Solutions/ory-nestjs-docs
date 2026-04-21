@@ -90,6 +90,11 @@ const config: Config = {
           label: 'Development',
         },
         {
+          href: 'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-example',
+          label: 'Example',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs',
           label: 'GitHub',
           position: 'right',
@@ -135,6 +140,10 @@ const config: Config = {
             {
               label: 'GitHub',
               href: 'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs',
+            },
+            {
+              label: 'Example App',
+              href: 'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-example',
             },
             {
               label: 'Stack Overflow',

@@ -2,6 +2,10 @@
 
 Get up and running with `ory-nestjs` in 5 minutes. Pick the deployment mode that matches where your Ory stack runs — the rest of the library surface (guards, decorators, services) is identical.
 
+:::tip Working reference implementation
+A full runnable example — NestJS services + Docker Compose + endpoint samples — lives at [**TabsAndSpaces-Software-Solutions/ory-nestjs-example**](https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-example). Clone it alongside this guide if you prefer reading working code to copying snippets.
+:::
+
 ## 1. Register the Module
 
 ### Option A — Ory Cloud (`mode: 'cloud'`)

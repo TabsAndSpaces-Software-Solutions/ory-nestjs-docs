@@ -8,6 +8,10 @@ End-to-end walkthrough: from `nest new` to a running three-service system where 
 
 Everything here ships in `ory-nestjs@0.4.0+`. If you're on 0.2.x, the HMAC-based Oathkeeper mode is still there and behaves the same; the `verifier: 'jwt'` upgrade path is additive.
 
+:::tip Skip the typing — clone the example
+The three services, `docker-compose.yml`, Oathkeeper configs, and access rules shown below are all committed at [**TabsAndSpaces-Software-Solutions/ory-nestjs-example**](https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-example). `git clone` it and `docker compose up` if you'd rather see it running first, then read the rest of this page to understand each piece.
+:::
+
 :::note 0.4.0 fixes relevant to this scenario
 - `Authorization: Bearer <jwt>` is now accepted unchanged — the transport strips the `Bearer ` prefix for `verifier: 'jwt'`. Before 0.4.0 every request 401'd with `auth.failure.invalid_signature`.
 - `@RequirePermission(...)` routes correctly read `.data.allowed` off Keto's Axios response (instead of the incorrect `.allowed` on the raw response). Pre-0.4.0 every permission check 403'd even when Keto answered `allowed: true`.

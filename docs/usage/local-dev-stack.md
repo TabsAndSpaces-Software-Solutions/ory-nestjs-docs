@@ -1,5 +1,9 @@
 # Local Development Stack
 
+:::tip Ready-made example
+The file set below is mirrored in [**TabsAndSpaces-Software-Solutions/ory-nestjs-example**](https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-example) alongside three pre-wired NestJS services that consume it. Clone once and `docker compose up` if you'd rather start from a running system than paste configs.
+:::
+
 Spin up the **full Ory stack** on your machine with one `docker compose up`:
 
 | Service | Host URL | Role |

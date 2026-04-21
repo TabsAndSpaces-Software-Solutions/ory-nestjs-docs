@@ -19,3 +19,7 @@ The core philosophy of this library is the **Zero-Ory-leakage contract**. This m
 - Follow the [Quick Start](./usage/quick-start) to integrate `ory-nestjs` into your project in 5 minutes.
 - Check the [Installation](./usage/installation) guide for package details.
 - Explore [Architecture](./development/architecture) to understand how it works under the hood.
+
+## Example repository
+
+A fully wired, runnable reference implementation lives at **[TabsAndSpaces-Software-Solutions/ory-nestjs-example](https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-example)** — clone, `docker compose up`, and hit the endpoints. Every scenario in this documentation has matching code in that repo; the README there maps each doc page to the commit that introduced the corresponding feature.
