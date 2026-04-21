@@ -18,9 +18,10 @@ IamModule.forRootAsync({
       customer: {
         mode: 'cloud',
         transport: 'cookie-or-bearer',
-        kratos: { publicUrl: cs.get('CUSTOMER_KRATOS_URL') },
-        keto:   { readUrl: cs.get('CUSTOMER_KETO_URL'), writeUrl: cs.get('CUSTOMER_KETO_URL') },
-        cloud:  { projectSlug: cs.get('CUSTOMER_PROJECT'), apiKey: cs.get('CUSTOMER_API_KEY') },
+        trustProxy: true,
+        // URLs derived from cloud.projectSlug; no kratos/keto blocks needed
+        // unless you want to override e.g. sessionCookieName.
+        cloud: { projectSlug: cs.getOrThrow('CUSTOMER_PROJECT'), apiKey: cs.getOrThrow('CUSTOMER_API_KEY') },
       },
       admin: {
         mode: 'self-hosted',

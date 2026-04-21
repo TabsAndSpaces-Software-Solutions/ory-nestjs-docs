@@ -19,18 +19,39 @@ IamModule.forRoot({
 Use when config comes from `@nestjs/config`, a secret manager, or any async source.
 
 ```ts
+// Self-hosted example
 IamModule.forRootAsync({
   imports: [ConfigModule],
   inject: [ConfigService],
   useFactory: (cs: ConfigService) => ({
     tenants: {
       customer: {
-        mode: cs.get('IAM_MODE') as 'self-hosted' | 'cloud',
+        mode: 'self-hosted',
         transport: 'cookie-or-bearer',
+        trustProxy: true,
         kratos: {
-          publicUrl: cs.get('KRATOS_PUBLIC_URL'),
+          publicUrl: cs.getOrThrow('KRATOS_PUBLIC_URL'),
           adminUrl: cs.get('KRATOS_ADMIN_URL'),
           adminToken: cs.get('KRATOS_ADMIN_TOKEN'),
+        },
+      },
+    },
+  }),
+});
+
+// Ory Cloud example — no kratos block needed; URLs derived from projectSlug.
+IamModule.forRootAsync({
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: (cs: ConfigService) => ({
+    tenants: {
+      customer: {
+        mode: 'cloud',
+        transport: 'cookie-or-bearer',
+        trustProxy: true,
+        cloud: {
+          projectSlug: cs.getOrThrow('ORY_PROJECT_SLUG'),
+          apiKey: cs.getOrThrow('ORY_CLOUD_API_KEY'),
         },
       },
     },
@@ -56,12 +77,23 @@ Before 0.2.0 only `SessionGuard` was bound to `APP_GUARD`, which silently turned
 type TenantConfig = {
   mode: 'self-hosted' | 'cloud';
   transport: 'cookie' | 'bearer' | 'cookie-or-bearer' | 'oathkeeper';
-  kratos: {
-    publicUrl: string;            // required
+
+  // Required for mode: 'self-hosted'. Optional for mode: 'cloud' —
+  // the library derives Kratos URLs from cloud.projectSlug and only
+  // reads this block for overrides (e.g. a project-specific
+  // sessionCookieName).
+  kratos?: {
+    publicUrl?: string;           // required in self-hosted; derived from projectSlug in cloud
     adminUrl?: string;            // required for admin ops (identity CRUD, session revoke)
     adminToken?: string;          // required when adminUrl is set in self-hosted mode
-    sessionCookieName?: string;   // default 'ory_kratos_session'
+    sessionCookieName?: string;   // default 'ory_kratos_session' — override for Ory Cloud
   };
+
+  // Required for mode: 'cloud'. The library uses these to build the
+  // Ory Cloud project URL (https://<projectSlug>.projects.oryapis.com)
+  // and to authenticate admin calls.
+  cloud?: { projectSlug: string; apiKey: string };
+
   keto?: { readUrl: string; writeUrl: string; apiKey?: string };
   hydra?: {
     publicUrl: string;
@@ -70,7 +102,6 @@ type TenantConfig = {
     clientId?: string;            // required for TokenService.clientCredentials
     clientSecret?: string;
   };
-  cloud?: { projectSlug: string; apiKey: string };  // required when mode='cloud'
   oathkeeper?: {
     identityHeader?: string;      // default 'X-User'
     signatureHeader?: string;     // default 'X-User-Signature'
@@ -81,3 +112,58 @@ type TenantConfig = {
   trustProxy?: boolean;           // required true in production with cookie transport
 };
 ```
+
+### Examples by mode
+
+#### Cloud
+
+```ts
+{
+  mode: 'cloud',
+  transport: 'cookie-or-bearer',
+  cloud: {
+    projectSlug: 'nifty-blackwell-thv46tbvh5',
+    apiKey: process.env.ORY_CLOUD_API_KEY!,
+  },
+  trustProxy: true,
+  // Optional override: Ory Cloud names the session cookie with a
+  // project-specific random slug, not the projectSlug used above.
+  // Look it up in Ory Console → Project Settings → Sessions.
+  kratos: { sessionCookieName: 'ory_session_abcdef01234' },
+}
+```
+
+The library builds the Ory Cloud API URL (`https://<projectSlug>.projects.oryapis.com`) automatically and uses `cloud.apiKey` for every admin-scoped call — you do not need to populate `kratos.publicUrl`, `kratos.adminUrl`, or `kratos.adminToken` yourself.
+
+#### Self-hosted
+
+```ts
+{
+  mode: 'self-hosted',
+  transport: 'cookie-or-bearer',
+  kratos: {
+    publicUrl: 'https://kratos.example.com',
+    adminUrl: 'https://kratos-admin.internal',
+    adminToken: process.env.KRATOS_ADMIN_TOKEN!,
+  },
+  // Optional Keto / Hydra for permissions + OAuth2:
+  keto: {
+    readUrl: 'https://keto-read.internal',
+    writeUrl: 'https://keto-write.internal',
+  },
+  hydra: {
+    publicUrl: 'https://hydra.example.com',
+    adminUrl: 'https://hydra-admin.internal',
+    adminToken: process.env.HYDRA_ADMIN_TOKEN!,
+    clientId: process.env.HYDRA_CLIENT_ID,
+    clientSecret: process.env.HYDRA_CLIENT_SECRET,
+  },
+  trustProxy: true,
+}
+```
+
+`kratos.publicUrl` is required; everything else scales with the features you use (`adminUrl`/`adminToken` for admin APIs, `keto` for permission checks, `hydra` for OAuth2 / machine-to-machine tokens).
+
+:::note Since 0.2.1
+In 0.2.0 the `kratos` block was required for every tenant regardless of mode, which broke `mode: 'cloud'` at both the TypeScript (`Property 'kratos' is missing in type`) and runtime (*"kratos is required"*) layers. 0.2.1 made `kratos` optional for cloud tenants and derives URLs + admin credentials from `cloud.projectSlug` + `cloud.apiKey`. Self-hosted still requires `kratos.publicUrl`.
+:::
