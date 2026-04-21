@@ -29,13 +29,13 @@ Keto can traverse these — defining an `edit` relation as "owner of the listing
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { PermissionService, UkkiIdentity } from 'ory-nestjs';
+import { PermissionService, IamIdentity } from 'ory-nestjs';
 
 @Injectable()
 export class ListingService {
   constructor(private readonly perms: PermissionService) {}
 
-  async create(input: CreateListingDto, user: UkkiIdentity) {
+  async create(input: CreateListingDto, user: IamIdentity) {
     const id = await this.repo.insert(input);
     await this.perms.forTenant('default').grant({
       namespace: 'listings',
@@ -104,7 +104,7 @@ The resolver must not do I/O — it runs synchronously inside the guard.
 Beyond the declarative guard, call `PermissionService.check` directly when logic depends on authorization state:
 
 ```ts
-async canUserViewListing(user: UkkiIdentity, listingId: string): Promise<boolean> {
+async canUserViewListing(user: IamIdentity, listingId: string): Promise<boolean> {
   return this.perms.forTenant('default').check({
     namespace: 'listings',
     object: `listings:${listingId}`,

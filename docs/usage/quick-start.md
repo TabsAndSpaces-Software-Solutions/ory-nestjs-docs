@@ -7,12 +7,12 @@ Get up and running with `ory-nestjs` in 5 minutes.
 ```ts
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { UkkiIamModule, InMemorySessionCache } from 'ory-nestjs';
+import { IamModule, InMemorySessionCache } from 'ory-nestjs';
 import { AppController } from './app.controller';
 
 @Module({
   imports: [
-    UkkiIamModule.forRoot({
+    IamModule.forRoot({
       sessionCache: new InMemorySessionCache(), // optional: enable in-memory caching
       tenants: {
         default: {
@@ -38,7 +38,7 @@ export class AppModule {}
 ```ts
 // app.controller.ts
 import { Controller, Get } from '@nestjs/common';
-import { CurrentUser, Public, UkkiIdentity } from 'ory-nestjs';
+import { CurrentUser, Public, IamIdentity } from 'ory-nestjs';
 
 @Controller()
 export class AppController {
@@ -49,7 +49,7 @@ export class AppController {
   }
 
   @Get('/me')
-  me(@CurrentUser() user: UkkiIdentity) {
+  me(@CurrentUser() user: IamIdentity) {
     return user;
   }
 }

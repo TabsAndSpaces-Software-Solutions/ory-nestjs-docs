@@ -9,7 +9,7 @@ Three separate Ory projects — one per tenant — in a single process. This is 
 ## Module setup
 
 ```ts
-UkkiIamModule.forRootAsync({
+IamModule.forRootAsync({
   imports: [ConfigModule],
   inject: [ConfigService],
   useFactory: (cs: ConfigService) => ({
@@ -106,7 +106,7 @@ Dealers' partner APIs accept M2M tokens:
 export class PartnerApiController {
   @Get('inventory')
   @RequireRole('inventory:read')     // scope doubles as role for machine principals
-  listInventory(@CurrentUser() principal: UkkiMachinePrincipal) {
+  listInventory(@CurrentUser() principal: IamMachinePrincipal) {
     // principal.kind === 'machine'
     // principal.clientId = 'dealer-123'
     // principal.scope = ['inventory:read']

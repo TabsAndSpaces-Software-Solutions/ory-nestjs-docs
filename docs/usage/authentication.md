@@ -4,9 +4,9 @@
 
 | Guard | Use when | Principal attached |
 |---|---|---|
-| `SessionGuard` | Default; cookie-based or bearer-token Kratos sessions | `UkkiIdentity` |
-| `OptionalSessionGuard` | Route has both auth'd and anonymous modes | `UkkiIdentity \| null` |
-| `OAuth2Guard` | Machine-to-machine calls with Hydra-issued tokens | `UkkiMachinePrincipal` |
+| `SessionGuard` | Default; cookie-based or bearer-token Kratos sessions | `IamIdentity` |
+| `OptionalSessionGuard` | Route has both auth'd and anonymous modes | `IamIdentity \| null` |
+| `OAuth2Guard` | Machine-to-machine calls with Hydra-issued tokens | `IamMachinePrincipal` |
 | `PermissionGuard` | Enforces `@RequirePermission` via Keto | — (runs after `SessionGuard`) |
 | `RoleGuard` | Enforces `@RequireRole` against identity traits | — (runs after `SessionGuard`) |
 

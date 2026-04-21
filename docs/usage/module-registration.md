@@ -5,7 +5,7 @@
 Use when your config values are available at module-load time (process env, literals).
 
 ```ts
-UkkiIamModule.forRoot({
+IamModule.forRoot({
   tenants: { /* … */ },
   defaultTenant: 'customer', // optional; auto-picked if only one tenant
   global: true,              // default true; see below
@@ -19,7 +19,7 @@ UkkiIamModule.forRoot({
 Use when config comes from `@nestjs/config`, a secret manager, or any async source.
 
 ```ts
-UkkiIamModule.forRootAsync({
+IamModule.forRootAsync({
   imports: [ConfigModule],
   inject: [ConfigService],
   useFactory: (cs: ConfigService) => ({

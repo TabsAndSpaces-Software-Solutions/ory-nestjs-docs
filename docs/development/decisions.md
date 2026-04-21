@@ -22,7 +22,7 @@ This document tracks the significant technical decisions made during the develop
 
 ## ADR 4: Global-by-default Security
 
-**Decision**: The `UkkiIamModule` registers a global `SessionGuard` by default.
+**Decision**: The `IamModule` registers a global `SessionGuard` by default.
 
 **Rationale**: A "secure by default" posture reduces the risk of accidentally exposing routes. Developers must explicitly opt-out using the `@Public()` decorator.
 

@@ -4,7 +4,7 @@ This guide covers the day-to-day workflow for developers working on the `ory-nes
 
 ## Commands
 
-From the package root (`packages/ukki-iam`):
+From the package root (`packages/ory-nestjs`):
 
 ```bash
 pnpm install            # Install dependencies

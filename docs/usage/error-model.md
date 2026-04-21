@@ -8,7 +8,7 @@ Every library throw is one of four classes, mapped to a NestJS exception with a 
 
 | Thrown | Nest exception | HTTP | Payload highlights |
 |---|---|---|---|
-| `IamUnauthorizedError` | `UnauthorizedException` | 401 | `wwwAuthenticate: 'Bearer realm="ukki-iam"'` |
+| `IamUnauthorizedError` | `UnauthorizedException` | 401 | `wwwAuthenticate: 'Bearer realm="ory-nestjs"'` |
 | `IamForbiddenError` | `ForbiddenException` | 403 | — |
 | `IamUpstreamUnavailableError` | `ServiceUnavailableException` | 503 | `retryAfter: 5` |
 | `IamConfigurationError` | `InternalServerErrorException` | 500 | Generic message (detail logged server-side only) |

@@ -44,7 +44,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/ukki/development/tree/main/packages/ukki-iam/',
+            'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs/tree/main/',
         },
         blog: false,
         theme: {
@@ -60,7 +60,7 @@ const config: Config = {
     announcementBar: {
       id: 'support_us',
       content:
-        '<b>ory-nestjs</b> is now the official name for @ukki/iam. Check out the new documentation!',
+        '<b>ory-nestjs</b> is now live on <a href="https://www.npmjs.com/package/ory-nestjs" target="_blank" rel="noopener">npm</a> — <code>pnpm add ory-nestjs</code>.',
       backgroundColor: '#000',
       textColor: '#fff',
       isCloseable: true,
@@ -90,7 +90,7 @@ const config: Config = {
           label: 'Development',
         },
         {
-          href: 'https://github.com/ukki/development',
+          href: 'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs',
           label: 'GitHub',
           position: 'right',
         },
@@ -134,7 +134,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/ukki/development',
+              href: 'https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs',
             },
             {
               label: 'Stack Overflow',

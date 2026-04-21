@@ -8,7 +8,7 @@ By default, every request hits Kratos to validate the session. To reduce latency
 
 ## Enabling caching
 
-1. Provide a `sessionCache` implementation in `UkkiIamModule.forRoot`.
+1. Provide a `sessionCache` implementation in `IamModule.forRoot`.
 2. Set `cache.sessionTtlMs > 0` for the desired tenants.
 
 The library ships with two implementations:
@@ -16,7 +16,7 @@ The library ships with two implementations:
 - `InMemorySessionCache`: A simple LRU cache for single-pod deployments.
 
 ```ts
-UkkiIamModule.forRoot({
+IamModule.forRoot({
   sessionCache: new InMemorySessionCache({ max: 1000 }),
   tenants: {
     default: {

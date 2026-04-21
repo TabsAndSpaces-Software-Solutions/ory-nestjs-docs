@@ -10,16 +10,16 @@ To ship events elsewhere, provide your own sink:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { AuditSink, AUDIT_SINK, UkkiAuditEvent } from 'ory-nestjs';
+import { AuditSink, AUDIT_SINK, IamAuditEvent } from 'ory-nestjs';
 
 @Injectable()
 export class OtelAuditSink implements AuditSink {
-  async emit(event: UkkiAuditEvent) {
+  async emit(event: IamAuditEvent) {
     // push to OTel log record, SIEM webhook, Kafka, whatever.
   }
 }
 
-UkkiIamModule.forRoot({
+IamModule.forRoot({
   tenants: { /* … */ },
   auditSink: { provide: AUDIT_SINK, useClass: OtelAuditSink },
 });
@@ -44,7 +44,7 @@ Events emitted:
 | `authz.upstream_unavailable` | `PermissionGuard` | warn |
 | `authz.session.revoke` | `SessionService.revoke`, `IdentityService.revokeSession` | info |
 | `health.probe_failure` | `IamHealthIndicator` | warn |
-| `config.boot_failure` | `UkkiIamModule` | error |
+| `config.boot_failure` | `IamModule` | error |
 
 ## Health indicator (`@nestjs/terminus`)
 
@@ -59,7 +59,7 @@ export class HealthController {
   @Get()
   @Public()
   check() {
-    return this.health.check([() => this.iam.isHealthy('ukki-iam')]);
+    return this.health.check([() => this.iam.isHealthy('ory-nestjs')]);
   }
 }
 ```

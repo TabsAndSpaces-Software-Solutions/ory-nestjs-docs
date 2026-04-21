@@ -97,7 +97,7 @@ export class OrderController {
     relation: 'view',
     object: (req) => \`orders:\${req.params.id}\`,
   })
-  async getOrder(@Param('id') id: string, @CurrentUser() user: UkkiIdentity) {
+  async getOrder(@Param('id') id: string, @CurrentUser() user: IamIdentity) {
     return this.service.findOrder(id, user.id);
   }
 }`}

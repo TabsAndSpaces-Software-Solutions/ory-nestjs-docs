@@ -63,7 +63,7 @@ export const VendorAdmin = (type?: 'logistics' | 'finance' | 'rto' | 'insurance'
 ## Module setup (single tenant)
 
 ```ts
-UkkiIamModule.forRootAsync({
+IamModule.forRootAsync({
   imports: [ConfigModule],
   inject: [ConfigService],
   useFactory: (cs: ConfigService) => ({
@@ -103,7 +103,7 @@ export class ListingsController {
   // Only sellers can create listings.
   @Post()
   @RequireRole('customer:seller')
-  create(@CurrentUser() user: UkkiIdentity, @Body() body: CreateListingDto) { /* … */ }
+  create(@CurrentUser() user: IamIdentity, @Body() body: CreateListingDto) { /* … */ }
 
   // Only the seller who owns this listing can edit it — Keto check.
   @Put(':id')
@@ -118,7 +118,7 @@ export class ListingsController {
   // Buyers place offers.
   @Post(':id/offers')
   @RequireRole('customer:buyer')
-  makeOffer(@Param('id') id: string, @CurrentUser() user: UkkiIdentity) { /* … */ }
+  makeOffer(@Param('id') id: string, @CurrentUser() user: IamIdentity) { /* … */ }
 }
 ```
 
@@ -178,7 +178,7 @@ The library's `@RequireRole` doesn't know about "vendor type". Encode both type 
 export class LogisticsVendorController {
   @Get('shipments')
   // inherits controller-level OR — either role passes
-  listShipments(@CurrentUser() user: UkkiIdentity) { /* … */ }
+  listShipments(@CurrentUser() user: IamIdentity) { /* … */ }
 
   @Post('shipments/:id/cancel')
   @RequireRole('vendor:logistics:admin')          // admin only; tightens at method level
@@ -194,7 +194,7 @@ Repeat the pattern per vendor type (`/vendor/finance`, `/vendor/rto`, `/vendor/i
 export class VendorTypeGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest();
-    const user = req.user as UkkiIdentity;
+    const user = req.user as IamIdentity;
     const routeType = req.params.type as string;
     const allowed = user.metadataPublic?.vendor?.type === routeType;
     if (!allowed) throw new ForbiddenException();

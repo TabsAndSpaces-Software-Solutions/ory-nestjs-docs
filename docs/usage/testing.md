@@ -6,14 +6,14 @@ sidebar_position: 11
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { UkkiIamTestingModule } from 'ory-nestjs';
+import { IamTestingModule } from 'ory-nestjs';
 import request from 'supertest';
 
 describe('ListingsController', () => {
   it('allows the owner to edit', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
-        UkkiIamTestingModule.forRoot({
+        IamTestingModule.forRoot({
           identity: {
             id: 'u_abc', schemaId: 'default', state: 'active',
             verifiedAddressesFlags: { email: true, phone: false },
@@ -36,7 +36,7 @@ describe('ListingsController', () => {
   it('denies when not owner', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
-        UkkiIamTestingModule.forRoot({
+        IamTestingModule.forRoot({
           identity: { /* same */ },
           permissions: { 'listings:edit:listings:42': false },
         }),
@@ -50,7 +50,7 @@ describe('ListingsController', () => {
 
   it('rejects unauthenticated request', async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [UkkiIamTestingModule.forRoot({ /* no identity */ })],
+      imports: [IamTestingModule.forRoot({ /* no identity */ })],
       controllers: [ListingsController],
     }).compile();
     const app = moduleRef.createNestApplication();

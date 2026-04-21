@@ -4,10 +4,10 @@
 
 ### Configuration
 
-Define multiple tenants in the `UkkiIamModule` configuration:
+Define multiple tenants in the `IamModule` configuration:
 
 ```ts
-UkkiIamModule.forRoot({
+IamModule.forRoot({
   defaultTenant: 'customer',
   tenants: {
     customer: { /* ... */ },
