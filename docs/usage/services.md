@@ -27,7 +27,7 @@ OAuth2 operations (Hydra).
 - `introspect(token)`: Introspect a token.
 
 ### `FlowService`
-Self-service flows (Kratos). Every `initiate*` accepts an optional `{ kind?: 'browser' \| 'native', returnTo?: string, ... }` — see [Self-service flows](./self-service-flows) for when to pick `'native'`.
+Self-service flows (Kratos). Every `initiate*` accepts an optional `{ kind?: 'browser' \| 'native', returnTo?: string, ... }` — see [Self-service flows](./self-service-flows) for when to pick `'native'`. Every `submit*` resolves to `{ kind: 'success', sessionId }` or `{ kind: 'continue', flow }`; user-facing errors (wrong password, duplicate email, unknown identifier) arrive as `continue` with messages attached to the flow UI, **not** as thrown exceptions.
 - `initiateLogin(opts?)` / `submitLogin()`
 - `initiateRegistration(opts?)` / `submitRegistration()`
 - `initiateSettings(opts?)` / `submitSettings()`

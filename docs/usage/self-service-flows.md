@@ -30,6 +30,31 @@ export class AuthController {
 
 Returned flow DTOs (`IamLoginFlow`, etc.) contain library-owned `IamFlowUi` nodes + an opaque `csrfToken`. Never pass Ory's UI shapes directly to your frontend; always go through these DTOs.
 
+## The `continue` vs `success` result
+
+Every `submit*` method resolves to one of two shapes:
+
+| Result | When | What to do |
+|---|---|---|
+| `{ kind: 'success', sessionId }` | Kratos authenticated the user and issued a session. | Set the session cookie, redirect / return 200. |
+| `{ kind: 'continue', flow }` | Submission didn't complete — validation failed, a new step is required, or a UI-level error needs to be shown (wrong password, duplicate email, unknown identifier, missing required field). | Re-render the flow — `flow.ui.messages[*]` and per-field `flow.ui.nodes[*].messages[*]` carry the error text to show the user. |
+
+User-facing errors are **not** thrown — they come back as `continue` so your frontend can render them inline next to the offending field. Only *infrastructure* failures throw (network errors, Kratos 5xx, flow expired, etc.).
+
+```ts
+const result = await this.flows.forTenant('customer').submitLogin(id, body);
+if (result.kind === 'success') {
+  // Good to go — set cookie, return user.
+  return { sessionId: result.sessionId };
+}
+// `continue` — render the flow again; the new UI carries the error message.
+return result.flow;
+```
+
+:::note Since 0.4.1
+Kratos v26+ returns **HTTP 400 with a full flow body** for the most common user-facing failure modes (wrong password, duplicate email, unknown identifier). Earlier `ory-nestjs` releases passed those 400s straight through `ErrorMapper`, which surfaced them as 500s — breaking the documented discriminated-union pattern. As of 0.4.1 `submitLogin` / `submitRegistration` / `submitRecovery` / `submitVerification` unwrap the 400 flow envelope into `{ kind: 'continue', flow }` automatically. No consumer-side change required; remove any `try { submit… } catch { re-fetch flow }` workarounds. (`submitSettings` was not affected — Kratos returns 422 there, which was never routed through the 400 path.)
+:::
+
 ## Browser vs native flows
 
 Every `initiate*` method takes an optional `kind: 'browser' | 'native'` selector. Kratos runs two distinct APIs behind the two modes; pick the one that matches your client.
