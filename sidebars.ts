@@ -51,6 +51,7 @@ const sidebars: SidebarsConfig = {
         'usage/scenario-a',
         'usage/scenario-b',
         'usage/scenario-c',
+        'usage/scenario-d',
       ],
     },
     'mcp-server',
