@@ -42,7 +42,13 @@ Config is validated synchronously at module-init time via zod; invalid config fa
 
 ### The `global` option
 
-`global: true` (default) registers `SessionGuard` as `APP_GUARD`: every route is authenticated unless decorated with `@Public()`. `global: false` disables the global guard — routes default to *unauthenticated* and you opt **in** per route via `@UseGuards(SessionGuard)`. Either way, the module itself is always `@Global()` in the NestJS sense so guards/services are reachable everywhere.
+`global: true` (default) registers the full guard chain — `SessionGuard`, then `RoleGuard`, then `PermissionGuard` — as `APP_GUARD`s, in that order. Every route is authenticated and authorized unless decorated with `@Public()` / `@Anonymous()`. `RoleGuard` and `PermissionGuard` are no-ops on any route that doesn't carry `@RequireRole` / `@RequirePermission`, so global registration is safe for endpoints that only need authentication.
+
+`global: false` disables all three global bindings — routes default to *unauthenticated* and you opt **in** per route via `@UseGuards(SessionGuard, RoleGuard, PermissionGuard)` (include only what you need). Either way, the module itself is always `@Global()` in the NestJS sense so guards/services are reachable everywhere.
+
+:::note Since 0.2.0
+Before 0.2.0 only `SessionGuard` was bound to `APP_GUARD`, which silently turned `@RequireRole` / `@RequirePermission` into no-ops unless consumers manually added `@UseGuards(RoleGuard, PermissionGuard)` to every controller. As of 0.2.0 the three guards run as a chain under `APP_GUARD` and `@RequireRole` / `@RequirePermission` are enforced by default.
+:::
 
 ### Tenant config shape
 
