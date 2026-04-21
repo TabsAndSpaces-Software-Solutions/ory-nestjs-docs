@@ -4,9 +4,9 @@
 
 Once connected, your AI can answer things like *"How do I configure multi-tenancy?"* or *"What's the contract of `@RequireRole`?"* against the real, current docs instead of training-data guesses.
 
-- **MCP endpoint**: `https://ory-nestjs-docs.vercel.app/mcp`
+- **MCP endpoint**: `https://orynestjs.tabsandspaces.co/mcp`
 - **Transport**: Streamable HTTP (stateless, no sessions to manage)
-- **Docs site** (human-readable): https://ory-nestjs-docs.vercel.app/
+- **Docs site** (human-readable): https://orynestjs.tabsandspaces.co/
 
 ## Tools exposed
 
@@ -25,7 +25,7 @@ Pick the snippet for your tool. All point at the same remote URL — nothing to 
 One command:
 
 ```bash
-claude mcp add --transport http ory-nestjs-docs https://ory-nestjs-docs.vercel.app/mcp
+claude mcp add --transport http ory-nestjs-docs https://orynestjs.tabsandspaces.co/mcp
 ```
 
 Or commit a project-scoped `.mcp.json` to share with your team:
@@ -35,7 +35,7 @@ Or commit a project-scoped `.mcp.json` to share with your team:
   "mcpServers": {
     "ory-nestjs-docs": {
       "type": "http",
-      "url": "https://ory-nestjs-docs.vercel.app/mcp"
+      "url": "https://orynestjs.tabsandspaces.co/mcp"
     }
   }
 }
@@ -51,7 +51,7 @@ Verify with `claude mcp list`.
 {
   "mcpServers": {
     "ory-nestjs-docs": {
-      "url": "https://ory-nestjs-docs.vercel.app/mcp"
+      "url": "https://orynestjs.tabsandspaces.co/mcp"
     }
   }
 }
@@ -65,7 +65,7 @@ Verify with `claude mcp list`.
 {
   "mcpServers": {
     "ory-nestjs-docs": {
-      "serverUrl": "https://ory-nestjs-docs.vercel.app/mcp"
+      "serverUrl": "https://orynestjs.tabsandspaces.co/mcp"
     }
   }
 }
@@ -79,7 +79,7 @@ Verify with `claude mcp list`.
 {
   "context_servers": {
     "ory-nestjs-docs": {
-      "url": "https://ory-nestjs-docs.vercel.app/mcp"
+      "url": "https://orynestjs.tabsandspaces.co/mcp"
     }
   }
 }
@@ -96,7 +96,7 @@ Some clients don't yet speak remote MCP natively — use Anthropic's `mcp-remote
   "mcpServers": {
     "ory-nestjs-docs": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "https://ory-nestjs-docs.vercel.app/mcp"]
+      "args": ["-y", "mcp-remote", "https://orynestjs.tabsandspaces.co/mcp"]
     }
   }
 }

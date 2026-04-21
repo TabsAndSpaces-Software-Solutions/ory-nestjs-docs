@@ -1,6 +1,6 @@
 # ory-nestjs-docs MCP server — local/dev
 
-**For end users**: use the remote server at `https://ory-nestjs-docs.vercel.app/mcp` — see [docs/mcp-server.md](../docs/mcp-server.md). No clone needed.
+**For end users**: use the remote server at `https://orynestjs.tabsandspaces.co/mcp` — see [docs/mcp-server.md](../docs/mcp-server.md). No clone needed.
 
 This directory contains the local stdio implementation kept for contributors who want to run/extend the MCP server while iterating on the docs. The production (remote) equivalent lives at [`../api/mcp.js`](../api/mcp.js) and is deployed as a Vercel serverless function behind the URL above.
 
