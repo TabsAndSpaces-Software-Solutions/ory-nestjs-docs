@@ -1,75 +1,109 @@
-# ory-nestjs MCP Server
+# ory-nestjs-docs MCP server
 
-This is a Model Context Protocol (MCP) server that exposes the `ory-nestjs` documentation to AI agents. It allows tools like Claude, Gemini, and Cursor to navigate and understand the documentation directly.
+Model Context Protocol (MCP) server that exposes the [ory-nestjs](https://www.npmjs.com/package/ory-nestjs) documentation (sourced from this repo's `docs/` directory, hosted at https://ory-nestjs-docs.vercel.app/) to AI coding tools.
 
-## Features
+Consumers of the `ory-nestjs` library can point Claude Code, Claude Desktop, Cursor, Windsurf, Zed, or VS Code (Continue/Cline) at this server to get accurate, version-aligned answers about module registration, guards, decorators, multi-tenancy, testing, and more.
 
-- `list_docs`: Discover all available documentation pages.
-- `read_doc`: Retrieve the full Markdown content of a specific page.
-- `search_docs`: Perform a keyword search across all documentation.
+## Tools
 
-## Installation
+| Tool | Input | Output |
+|---|---|---|
+| `list_docs` | — | Newline-separated list of every `.md` path under `docs/`. |
+| `read_doc` | `{ filePath: string }` (relative to `docs/`, e.g. `usage/quick-start.md`) | The file's full Markdown content. |
+| `search_docs` | `{ query: string }` | Paths of docs whose body contains the (case-insensitive) query. |
 
-Before configuring your AI tool, ensure you have installed the dependencies for the MCP server:
+## Install
 
 ```bash
-cd ory-nestjs/mcp
+git clone https://github.com/TabsAndSpaces-Software-Solutions/ory-nestjs-docs.git
+cd ory-nestjs-docs/mcp
 npm install
 ```
 
-## Configuration
+Requirements: Node.js 18+.
 
-The MCP server runs via `stdio`. You must provide the **absolute path** to the `index.js` file in your configuration.
+## Connect from an AI tool
 
-### 1. Claude Desktop
+The server is stdio-only. Every client takes the same server definition — only the config file location differs.
 
-Add the following to your Claude Desktop configuration file:
-
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json` (if applicable)
-
-#### Example Configuration (macOS/Linux)
-```json
+```json title="Standard entry"
 {
   "mcpServers": {
-    "ory-nestjs": {
+    "ory-nestjs-docs": {
       "command": "node",
-      "args": [
-        "/absolute/path/to/your/project/packages/ory-nestjs/mcp/index.js"
-      ]
+      "args": ["/absolute/path/to/ory-nestjs-docs/mcp/index.js"]
     }
   }
 }
 ```
 
-#### Example Configuration (Windows)
+### Claude Code
+
+```bash
+claude mcp add ory-nestjs-docs node /absolute/path/to/ory-nestjs-docs/mcp/index.js
+```
+
+Or commit a `.mcp.json` containing the standard entry at a project root to share across contributors.
+
+### Claude Desktop
+
+Paste the standard entry into:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
+### Cursor
+
+- UI: **Settings → MCP → + Add New MCP Server**. Name `ory-nestjs-docs`, Type `stdio`, Command `node /absolute/path/to/ory-nestjs-docs/mcp/index.js`.
+- File: `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per-project).
+
+### Windsurf
+
+`~/.codeium/windsurf/mcp_config.json` — standard entry.
+
+### VS Code (Continue / Cline)
+
+- Continue: Command Palette → *Continue: Open config.json* → add the standard entry.
+- Cline: Cline panel → Settings icon → *Edit MCP settings* → add the standard entry.
+
+### Zed
+
+`~/.config/zed/settings.json`:
+
 ```json
 {
-  "mcpServers": {
-    "ory-nestjs": {
-      "command": "node",
-      "args": [
-        "C:\\absolute\\path\\to\\your\\project\\packages\\ory-nestjs\\mcp\\index.js"
-      ]
+  "context_servers": {
+    "ory-nestjs-docs": {
+      "command": {
+        "path": "node",
+        "args": ["/absolute/path/to/ory-nestjs-docs/mcp/index.js"]
+      }
     }
   }
 }
 ```
 
-### 2. Cursor
+## Windows paths
 
-1.  Open **Cursor Settings** (Cmd+, or Ctrl+,).
-2.  Navigate to **General** > **MCP**.
-3.  Click **+ Add New MCP Server**.
-4.  **Name**: `ory-nestjs`
-5.  **Type**: `stdio`
-6.  **Command**: `node /absolute/path/to/ory-nestjs/mcp/index.js` (Use the actual absolute path for your OS).
+Escape backslashes in JSON:
+
+```json
+"args": ["C:\\Users\\you\\dev\\ory-nestjs-docs\\mcp\\index.js"]
+```
+
+## Updating
+
+```bash
+cd ory-nestjs-docs && git pull
+cd mcp && npm install   # only if deps changed
+```
+
+Restart the MCP server in your client to pick up new docs.
 
 ## Troubleshooting
 
-- **Absolute Paths**: Most MCP clients require absolute paths to the server script and the `node` executable if it's not in your system PATH.
-- **Node.js Version**: Ensure you are using Node.js 18 or higher.
-- **Logs**: Claude Desktop logs can be found at:
-    - macOS: `~/Library/Logs/Claude/mcp.log`
-    - Windows: `%APPDATA%\Claude\logs\mcp.log`
+- **Server not detected**: absolute paths only; some clients don't inherit shell PATH, so use the full `node` binary path if `command: "node"` fails.
+- **Logs**:
+  - Claude Desktop — macOS `~/Library/Logs/Claude/mcp.log`, Windows `%APPDATA%\Claude\logs\mcp.log`
+  - Claude Code — `claude mcp logs ory-nestjs-docs`
+  - Cursor — *Output* panel → **MCP Logs**
