@@ -135,6 +135,21 @@ type TenantConfig = {
   logging?: { level: 'error' | 'warn' | 'info' | 'debug' };
   cache?: { sessionTtlMs: number; permissionTtlMs: number; jwksTtlMs: number };
   trustProxy?: boolean;           // required true in production with cookie transport
+
+  // Per-tenant outbound rate limiter (token bucket). Omit to disable.
+  rateLimit?: {
+    rps: number;                  // sustained tokens/second; default 100
+    burst: number;                // bucket capacity; default 150
+    queueTimeoutMs?: number;      // wait at most N ms before 503; default 5_000
+    maxQueueSize?: number;        // waiters before immediate 503; default 100
+  };
+
+  // Per-host circuit breaker on outbound calls. Omit to disable.
+  circuitBreaker?: {
+    failureThreshold: number;     // consecutive 5xx/network errors; default 5
+    windowMs: number;             // sliding window for failure counting; default 30_000
+    openMs: number;               // OPEN duration before HALF_OPEN probe; default 10_000
+  };
 };
 ```
 
@@ -191,6 +206,35 @@ The library builds the Ory Cloud API URL (`https://<projectSlug>.projects.oryapi
 
 :::note Since 0.2.1
 In 0.2.0 the `kratos` block was required for every tenant regardless of mode, which broke `mode: 'cloud'` at both the TypeScript (`Property 'kratos' is missing in type`) and runtime (*"kratos is required"*) layers. 0.2.1 made `kratos` optional for cloud tenants and derives URLs + admin credentials from `cloud.projectSlug` + `cloud.apiKey`. Self-hosted still requires `kratos.publicUrl`.
+:::
+
+### Rate limit + circuit breaker (Since 0.5.0)
+
+Every tenant can opt into two outbound-axios interceptors:
+
+- **Rate limiter** — a per-tenant token-bucket. Requests block in a small FIFO queue when the bucket is empty; exceeding `queueTimeoutMs` or `maxQueueSize` raises `IamUpstreamUnavailableError` with a computed `retryAfter`.
+- **Circuit breaker** — one state machine per upstream host. N consecutive 5xx or network errors inside `windowMs` flip the circuit OPEN for `openMs`; a single HALF_OPEN probe then either closes it (success) or reopens it (failure). 4xx responses (401/403/404/429) do **not** count toward tripping — they reflect the caller, not upstream health.
+
+```ts
+IamModule.forRoot({
+  tenants: {
+    default: {
+      // … standard fields …
+      rateLimit: { rps: 200, burst: 400 },
+      circuitBreaker: {
+        failureThreshold: 10,
+        windowMs: 60_000,
+        openMs: 15_000,
+      },
+    },
+  },
+});
+```
+
+Both are **off by default** — omitting the block disables the interceptor entirely. When the library trips either guard it throws `IamUpstreamUnavailableError`, which the HTTP boundary maps to a 503 with a dynamic `Retry-After` (see [Error model](./error-model#retryafter-on-503)).
+
+:::warning Multi-pod caveat
+The rate limiter is in-process. If you run N pods, the effective global limit is N × rps. Divide your target Ory admin quota across pods in the `rps` setting. For a shared bucket you'd need a Redis-backed backend — not shipped with the library yet.
 :::
 
 :::note Since 0.4.0 — `TenantConfig` vs `ValidatedTenantConfig`

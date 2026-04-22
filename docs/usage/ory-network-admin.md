@@ -30,6 +30,28 @@ IamModule.forRoot({
 
 `apiKey` scopes to one project's data (Kratos/Keto/Hydra). `workspaceApiKey` scopes to the workspace and lets you manage projects themselves.
 
+## Typed DTOs
+
+All Network services return library-owned DTOs with named fields for everything the Ory SDK documents today, plus a narrow `additional: Record<string, unknown>` slot for forward-compat fields the library hasn't typed yet. Named fields have stable shapes across minor releases; `additional` is **intentionally untyped** and consumers should only read it as a last resort.
+
+```ts
+interface IamProject {
+  readonly id: string;
+  readonly name: string;
+  readonly slug?: string;
+  readonly workspaceId?: string;
+  readonly environment?: 'prod' | 'stage' | 'dev' | string;
+  readonly hosts?: readonly string[];
+  readonly state?: 'running' | 'halted' | 'destroyed' | string;
+  readonly createdAt?: string;
+  readonly updatedAt?: string;
+  readonly additional: Record<string, unknown>; // forward-compat
+  readonly tenant: TenantName;
+}
+```
+
+`IamWorkspace`, `IamEventStream`, `IamProjectMember`, and `IamWorkspaceProject` follow the same shape. If you find yourself depending on a field that only lives in `.additional`, open an issue — that's a cue for the library to type it.
+
 ## Projects
 
 ```ts

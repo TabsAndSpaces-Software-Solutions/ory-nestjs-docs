@@ -17,7 +17,11 @@ The core philosophy of this library is the **Zero-Ory-leakage contract**. This m
 - **Declarative Authorization**: Easy-to-use decorators for Role-Based Access Control (RBAC) and Relationship-Based Access Control (ReBAC via Keto).
 - **Built-in Caching**: Pluggable session caching to reduce latency.
 - **Audit Logging**: Structured audit events for every authentication and authorization decision.
-- **Test-friendly**: Dedicated testing module with in-memory stubs for zero-network testing.
+- **Production hardening** (v0.5.0):
+  - Per-tenant outbound **rate limiter** (token-bucket) and **circuit breaker** (per-host, trips on 5xx/network errors, 4xx doesn't count).
+  - **Audit events on every mutating call** — Kratos admin, Hydra client / JWK / trusted-issuer, Ory Network project / workspace / events — all emitted via pluggable `AuditSink` with stable `iam.<product>.<action>` names.
+  - **Typed DTOs across the board** — Network services no longer leak raw `Record<string, unknown>` envelopes; forward-compat fields live in a narrow `.additional` slot.
+- **Test-friendly**: Dedicated testing module with in-memory stubs for zero-network testing. Library itself ships unit + contract suites (793 tests, 94% service line-coverage) plus Testcontainers-driven Kratos + Keto + Hydra integration tests.
 
 ## Next Steps
 

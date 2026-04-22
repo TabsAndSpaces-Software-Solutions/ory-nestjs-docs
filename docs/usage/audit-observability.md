@@ -25,7 +25,9 @@ IamModule.forRoot({
 });
 ```
 
-Events emitted:
+Every mutating call on every service emits an event. Events follow the stable naming convention `iam.<product>.<action>` (e.g. `iam.identity.patch`, `iam.jwk.createSet`).
+
+**Authentication / authorization pipeline:**
 
 | Event | Source | Level |
 |---|---|---|
@@ -43,8 +45,52 @@ Events emitted:
 | `authz.permission.revoke` | `PermissionService.revoke` | info |
 | `authz.upstream_unavailable` | `PermissionGuard` | warn |
 | `authz.session.revoke` | `SessionService.revoke`, `IdentityService.revokeSession` | info |
+
+**Kratos admin mutations (v0.5.0+):**
+
+| Event | Source | Level |
+|---|---|---|
+| `iam.identity.create` | `IdentityService.create` | info |
+| `iam.identity.updateTraits` | `IdentityService.updateTraits` | info |
+| `iam.identity.patch` | `IdentityService.patch` (includes `paths[]` + `opCount`) | info |
+| `iam.identity.delete` | `IdentityService.delete` | info |
+| `iam.session.extend` | `IdentityService.extendSession` | info |
+| `iam.flow.logout.browser` | `FlowService.submitBrowserLogout` | info |
+| `iam.flow.logout.native` | `FlowService.performNativeLogout` | info |
+| `iam.courier.message.access` | `CourierService.get({ includeBody: true })` — surveillance event for SIEM alerting on admin reads of recovery/verification bodies | warn |
+
+**Hydra mutations:**
+
+| Event | Source | Level |
+|---|---|---|
+| `oauth2.client.create` | `OAuth2ClientService.create` | info |
+| `oauth2.client.delete` | `OAuth2ClientService.delete` | info |
+| `iam.jwk.createSet` / `updateSet` / `deleteSet` | `JwkService` | info |
+| `iam.jwk.updateKey` / `deleteKey` | `JwkService` | info |
+| `iam.oauth2.trustedIssuer.trust` | `TrustedIssuerService.trust` | info |
+| `iam.oauth2.trustedIssuer.delete` | `TrustedIssuerService.delete` | info |
+
+**Ory Network mutations:**
+
+| Event | Source | Level |
+|---|---|---|
+| `iam.network.project.create` / `set` | `ProjectAdminService` | info |
+| `iam.network.project.purge` (attribute `irreversible: true`) | `ProjectAdminService.purge` | info |
+| `iam.network.project.apiKey.create` / `apiKey.delete` | `ProjectAdminService` | info |
+| `iam.network.workspace.create` / `update` | `WorkspaceAdminService` | info |
+| `iam.network.workspace.apiKey.create` / `apiKey.delete` | `WorkspaceAdminService` | info |
+| `iam.network.events.create` / `set` / `delete` | `EventsService` | info |
+
+**Operational:**
+
+| Event | Source | Level |
+|---|---|---|
 | `health.probe_failure` | `IamHealthIndicator` | warn |
 | `config.boot_failure` | `IamModule` | error |
+
+:::tip Alerting
+Any event ending in `.purge`, `.delete`, or carrying `attributes.irreversible === true` is a reasonable default for a SIEM high-severity rule. `iam.courier.message.access` is specifically emitted so compliance can alert on administrators reading recovery tokens.
+:::
 
 ## Health indicator (`@nestjs/terminus`)
 
