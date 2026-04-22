@@ -46,6 +46,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Ory product surfaces',
+      items: [
+        'usage/kratos-admin',
+        'usage/oauth2-clients',
+        'usage/consent-flow',
+        'usage/ory-network-admin',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Scenarios',
       items: [
         'usage/scenario-a',

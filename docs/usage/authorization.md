@@ -45,3 +45,35 @@ Under the hood the guard calls Keto's `checkPermission` with `subject = 'user:' 
 | Role set is small and stable | ✅ | |
 | Relationships are dynamic (ownership, sharing) | | ✅ |
 | You need an audit trail of grants/revokes | | ✅ |
+
+### Batch checks
+
+When a list endpoint needs to filter rows by permission, fan out in a single call rather than N guard invocations:
+
+```ts
+const results = await this.perms.forTenant('default').checkBatch([
+  { namespace: 'listings', object: 'listings:1', relation: 'view', subject: `user:${userId}`, tenant: 'default' },
+  { namespace: 'listings', object: 'listings:2', relation: 'view', subject: `user:${userId}`, tenant: 'default' },
+  { namespace: 'listings', object: 'listings:3', relation: 'view', subject: `user:${userId}`, tenant: 'default' },
+]);
+// results: [{ tuple, allowed }, { tuple, allowed, error? }, ...]
+```
+
+Each check runs concurrently; per-tuple upstream errors surface as `error` rather than failing the whole batch.
+
+### Subject-tree expansion
+
+Answer "who can access X" questions with `expand`:
+
+```ts
+const tree = await this.perms.forTenant('default').expand({
+  namespace: 'listings',
+  object: 'listings:42',
+  relation: 'view',
+  maxDepth: 3,
+});
+// tree.root.type === 'union' | 'leaf' | ...
+// Walk tree.root.children to collect all subjects with the relation.
+```
+
+Use for admin tools, compliance reports, and off-boarding audits — don't put this on a hot request path.

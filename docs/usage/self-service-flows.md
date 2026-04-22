@@ -105,3 +105,30 @@ async initiateLogin(
 :::note Since 0.2.0
 The `kind` option was added in 0.2.0. In 0.1.x every `initiate*` call was hardcoded to the Browser API, so non-browser clients had to bypass `FlowService` entirely and call Kratos directly. Upgrading to 0.2.0 is a drop-in change — the default is still `'browser'`, so existing code keeps working.
 :::
+
+## Logout
+
+As of 0.5.0 `FlowService` also mediates Kratos logout. Three entry points depending on the client:
+
+```ts
+// Browser — two-step: Kratos returns a { logoutToken, logoutUrl } pair.
+@Get('logout')
+async initLogout(@Headers('cookie') cookie: string | undefined) {
+  return this.flows.forTenant('default').initiateBrowserLogout(cookie ?? '');
+}
+
+@Post('logout')
+async submitLogout(@Body() body: { logoutToken: string }) {
+  await this.flows.forTenant('default').submitBrowserLogout(body.logoutToken);
+  return { kind: 'success' };
+}
+
+// Native (mobile / CLI) — one call with the session token.
+@Post('logout/native')
+async native(@Body() body: { sessionToken: string }) {
+  await this.flows.forTenant('default').performNativeLogout(body.sessionToken);
+  return { kind: 'success' };
+}
+```
+
+The browser flow **requires** the original session cookie to be forwarded — include `req.headers.cookie` verbatim in `initiateBrowserLogout`. Kratos responds with `Set-Cookie` headers that clear the session; surface those back to the browser.
